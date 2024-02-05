@@ -1,28 +1,28 @@
 using System.Collections.Generic;
+using System.Diagnostics;
 using TMPro;
 using UnityEngine;
 using UnityEngine.AI;
 
 public class Food : MonoBehaviour
 {
-    public NavMeshAgent agent;
-    public List<Transform> waypoints = new List<Transform>();
-    public TextMeshPro nameTextMeshPro;
+    [HideInInspector] public NavMeshAgent agent;
+    [HideInInspector] public List<Transform> wayPoints = new List<Transform>();
+    [HideInInspector] public TextMeshPro nameTextMeshPro;
+
+    [Header("Food Parameters")]
     public string foodName = "Default";
-    private FoodAllocator foodAllocator;
     public Color foodColor = Color.white;
+
 
     private void Awake()
     {
         foreach (GameObject t in GameObject.FindGameObjectsWithTag("SpawnZone"))
         {
-            waypoints.Add(t.transform);
+            wayPoints.Add(t.transform);
         }
         nameTextMeshPro = GetComponentInChildren<TextMeshPro>();
-
         agent = GetComponent<NavMeshAgent>();
-        foodAllocator = GameObject.FindAnyObjectByType<FoodAllocator>();
-        agent.speed += Random.Range(0, foodAllocator.foodEaten/2);
     }
 
     private void Update()
@@ -34,7 +34,7 @@ public class Food : MonoBehaviour
     {
         if (!agent.pathPending && agent.remainingDistance < 1)
         {
-            agent.SetDestination(waypoints[Random.Range(0, waypoints.Count)].position);
+            agent.SetDestination(wayPoints[Random.Range(0, wayPoints.Count)].position);
         }
     }
 }

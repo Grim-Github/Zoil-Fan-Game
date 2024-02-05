@@ -3,9 +3,19 @@ using UnityEngine.Events;
 
 public class Trigger : MonoBehaviour
 {
+    [Header("Tags")]
     [SerializeField] private string TriggerTag = "Player";
+
+    [Header("Detection Object")]
     public Vector3 detectionBoxSize = new Vector3(2f, 2f, 2f);
-    public UnityEvent onPlayerTouch;
+
+    [Header("Detection Events")]
+    public UnityEvent onObjectTouch;
+    public UnityEvent onObjectExit;
+    public UnityEvent onObjectEnter;
+
+
+    private bool objectEntered = false;
 
 
     void Update()
@@ -16,9 +26,28 @@ public class Trigger : MonoBehaviour
         if (isPlayerInside)
         {
             Debug.Log("Player is inside the detection box!");
-            // Add your logic here
-            onPlayerTouch.Invoke();
+
+            onObjectTouch.Invoke();
+
+            if(objectEntered == false)
+            {
+                objectEntered = true;
+                onObjectEnter.Invoke();
+            }
         }
+        else
+        {
+            if(objectEntered == true)
+            {
+                objectEntered = false;
+                onObjectExit.Invoke();
+            }
+        }
+    }
+
+    public void LogTrigger(string text)
+    {
+        Debug.Log(text);
     }
 
     private void OnDrawGizmos()

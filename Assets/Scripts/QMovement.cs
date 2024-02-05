@@ -24,7 +24,7 @@ public class QMovement : MonoBehaviour
     private const float GRAVITY_ADD = 17.0f;
     private const float CAMERA_OFFSET = 0.72f;
     private const float PLAYER_HEIGHT = 1.8f;
-    private const float PLAYER_TILT = 8;
+    private const float PLAYER_TILT = 6;
     private const float PLAYER_TILTSPEED = 3;
 
 #if MOUSE_SMOOTHING
@@ -50,13 +50,14 @@ public class QMovement : MonoBehaviour
     private float vel_add;
     private float vel_mul;
     private float speed;
+    private float startRotSpeed;
     private float speed_mul;
-    private float  yOffset;
+    private float yOffset;
     private float starterAmp;
 #if USE_CROUCH
-	private float crouch_value = 0;
-	private float crouch_value_s = 0;
-	private Vector3 center_offset;
+    private float crouch_value = 0;
+    private float crouch_value_s = 0;
+    private Vector3 center_offset;
 #endif
 
     void Start()
@@ -73,10 +74,23 @@ public class QMovement : MonoBehaviour
         surface_normal = new Vector3(0, 1.0f, 0);
         move_input = new Vector3(0, 0, 0);
         camera_offset = new Vector3(0, CAMERA_OFFSET, 0);
+        startRotSpeed = rotationSpeed;
         starterAmp = amplitude;
 #if USE_CROUCH
-		center_offset = new Vector3(0, 0, 0);
+        center_offset = new Vector3(0, 0, 0);
 #endif
+    }
+
+    public void ToggleCameraMovement(bool value)
+    {
+        if (value)
+        {
+            rotationSpeed = startRotSpeed;
+        }
+        else
+        {
+            rotationSpeed = 0;
+        }
     }
 
     void TiltCamera()
@@ -89,7 +103,7 @@ public class QMovement : MonoBehaviour
         if (controller.velocity.magnitude > 0 && controller.isGrounded)
         {
 
-                amplitude = starterAmp;
+            amplitude = starterAmp;
 
         }
         else
@@ -102,8 +116,8 @@ public class QMovement : MonoBehaviour
             return;
         }
 
-    // Calculate the new yOffset using Mathf.Sin and amplitude
-    float targetYOffset = CAMERA_OFFSET + Mathf.Sin(frequency * Time.time) * amplitude;
+        // Calculate the new yOffset using Mathf.Sin and amplitude
+        float targetYOffset = CAMERA_OFFSET + Mathf.Sin(frequency * Time.time) * amplitude;
 
         // Use Mathf.Lerp to smoothly interpolate between current yOffset and targetYOffset
         yOffset = Mathf.Lerp(yOffset, targetYOffset, Time.deltaTime * bobbingSpeed);
@@ -135,7 +149,7 @@ public class QMovement : MonoBehaviour
             }
             move_direction.Normalize();
 #if USE_CROUCH
-			move_speed = move_direction.magnitude * (moveSpeed - crouch_value_s * 3.0f);
+            move_speed = move_direction.magnitude * (moveSpeed - crouch_value_s * 3.0f);
 #else
             move_speed = move_direction.magnitude * moveSpeed;
 #endif
@@ -171,34 +185,34 @@ public class QMovement : MonoBehaviour
             move_vector.y -= GRAVITY_ADD * frame_time;
         }
 #if USE_CROUCH
-		if (Input.GetButton("Crouch"))
-		{
-			if (crouch_value < 1.0f)
-			{
-				crouch_value += frame_time * 5.7f;
-				crouch_value_s = Mathf.Clamp01(crouch_value);
-				center_offset.y = crouch_value_s * -0.5f;
-				controller.height = PLAYER_HEIGHT - crouch_value_s;
-				controller.center = center_offset;
-				camera_offset.y = CAMERA_OFFSET - crouch_value_s * 0.9f;
-			}
-		}
-		else
-		{
-			if (crouch_value > 0)
-			{
-				RaycastHit hit_up;
-				if (!Physics.SphereCast(playerCamera.transform.position + vector_down * 0.25f, 0.3f, new Vector3(0, 1.0f, 0), out hit_up, 0.3f)) // Check if there is a space for player to raise
-				{
-					crouch_value -= frame_time * 5.0f;
-					crouch_value_s = Mathf.Clamp01(crouch_value);
-					center_offset.y = crouch_value_s * -0.5f;
-					controller.height = PLAYER_HEIGHT - crouch_value_s;
-					controller.center = center_offset;
-					camera_offset.y = CAMERA_OFFSET - crouch_value_s * 0.9f;
-				}
-			}
-		}
+        if (Input.GetButton("Crouch"))
+        {
+            if (crouch_value < 1.0f)
+            {
+                crouch_value += frame_time * 5.7f;
+                crouch_value_s = Mathf.Clamp01(crouch_value);
+                center_offset.y = crouch_value_s * -0.5f;
+                controller.height = PLAYER_HEIGHT - crouch_value_s;
+                controller.center = center_offset;
+                camera_offset.y = CAMERA_OFFSET - crouch_value_s * 0.9f;
+            }
+        }
+        else
+        {
+            if (crouch_value > 0)
+            {
+                RaycastHit hit_up;
+                if (!Physics.SphereCast(playerCamera.transform.position + vector_down * 0.25f, 0.3f, new Vector3(0, 1.0f, 0), out hit_up, 0.3f)) // Check if there is a space for player to raise
+                {
+                    crouch_value -= frame_time * 5.0f;
+                    crouch_value_s = Mathf.Clamp01(crouch_value);
+                    center_offset.y = crouch_value_s * -0.5f;
+                    controller.height = PLAYER_HEIGHT - crouch_value_s;
+                    controller.center = center_offset;
+                    camera_offset.y = CAMERA_OFFSET - crouch_value_s * 0.9f;
+                }
+            }
+        }
 #endif
         controller.Move(move_vector * frame_time);
 #if MOUSE_SMOOTHING

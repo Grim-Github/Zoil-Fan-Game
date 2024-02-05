@@ -6,6 +6,7 @@ TagManager:
   tags:
   - SpawnZone
   - Zoil
+  - TrashBin
   layers:
   - Default
   - TransparentFX

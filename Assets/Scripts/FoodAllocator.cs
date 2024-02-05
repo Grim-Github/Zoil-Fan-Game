@@ -1,13 +1,14 @@
+using System;
 using TMPro;
 using UnityEngine;
-using System;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 public class FoodAllocator : MonoBehaviour
 {
-    [SerializeField] public int foodEaten = 0;
-    [SerializeField] public float hungerRate = 2;
-    [SerializeField] public float hunger = 0;
+    public bool canEat = true;
+    public int foodEaten = 0;
+    public float hungerRate = 2;
+    public float hunger = 0;
     private Transform playerPosition;
     [SerializeField] private TextMeshProUGUI hungerText;
     [SerializeField] private TextMeshProUGUI eatenText;
@@ -19,11 +20,13 @@ public class FoodAllocator : MonoBehaviour
     [SerializeField] private ParticleSystem foodEatParticles;
     private PlayerInventory inventory;
     private TwitchChatManager twitchChatManager;
-    [SerializeField] public float eatRange = 3f;
+    private StreamerController streamerController;
+    public float eatRange = 3f;
 
     private void Awake()
     {
         inventory = GameObject.FindObjectOfType<PlayerInventory>();
+        streamerController = GameObject.FindObjectOfType<StreamerController>();
         twitchChatManager = GameObject.FindObjectOfType<TwitchChatManager>();
         playerPosition = GameObject.FindGameObjectWithTag("Player").transform;
         UpdateHungerText();
@@ -44,7 +47,14 @@ public class FoodAllocator : MonoBehaviour
     public void UpdateHungerText()
     {
         hungerText.text = Mathf.RoundToInt(hunger).ToString() + " /100";
-        hungerRateText.text = Math.Round(hungerRate , 2) + " HUNGER";
+        if (streamerController.isStreaming)
+        {
+            hungerRateText.text = Math.Round(hungerRate/2, 2) + " HUNGER";
+        }
+        else
+        {
+            hungerRateText.text = Math.Round(hungerRate, 2) + " HUNGER";
+        }
         spawnRateText.text = twitchChatManager.chanceToSpawn.ToString() + " % HAMBUGER SPREAD";
         eatenText.text = "ZOIL ATE " + foodEaten + " BUGERS";
     }
@@ -68,9 +78,16 @@ public class FoodAllocator : MonoBehaviour
 
     private void PlayerApproachEat()
     {
+
+
         if (Vector3.Distance(transform.position, playerPosition.position) < eatRange)
         {
             eatStatsCanvas.SetActive(true);
+
+            if (canEat == false)
+            {
+                return;
+            }
 
             if (inventory.amountOfItems > 0)
             {
@@ -94,7 +111,16 @@ public class FoodAllocator : MonoBehaviour
 
     private void Update()
     {
-        hunger += Time.deltaTime * hungerRate;
+        if (streamerController.isStreaming)
+        {
+            hunger += Time.deltaTime * hungerRate/2;
+        }
+        else
+        {
+            hunger += Time.deltaTime * hungerRate;
+        }
+
+
         hungerRate += .02f * Time.deltaTime;
         if (hunger >= 100)
         {

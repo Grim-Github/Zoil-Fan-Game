@@ -5,43 +5,109 @@ using UnityEngine.AI;
 
 public class Worker : MonoBehaviour
 {
+    [Header("Worker Components")]
     public NavMeshAgent agent;
+    public Transform[] agentInventory;
+
+    [Header("Worker Stats")]
+    public float workerXP = 0;
     public float maxSearchRadius = 10f;
     public float pickupRadius = 2;
 
-    public Transform[] agentInventory;
-    public List<Transform> waypoints = new List<Transform>();
-    private bool fullInventory = false;
-    private Vector3 startingPos = Vector3.zero;
 
+    [HideInInspector] public List<Transform> waypoints = new List<Transform>();
+    [HideInInspector] public List<Transform> trashBins = new List<Transform>();
+    private bool fullInventory = false;
+
+    private Vector3 startingPos = Vector3.zero;
+    private float startingSpeed;
+    private FoodAllocator foodAllocator;
 
     public enum Moods
     {
         Happy,
-        Sad,
-        Angry,
+        Bored,
+        HateWatching,
     }
+
+    [Header("Worker Moods")]
+    private float moodCheckTimer = 0;
+    public float moodSwing = 120;
+
+
 
     public Moods currentMood = Moods.Happy;
 
     private void Awake()
     {
         startingPos = transform.position;
+        foodAllocator = GameObject.FindAnyObjectByType<FoodAllocator>();
         foreach (GameObject t in GameObject.FindGameObjectsWithTag("SpawnZone"))
         {
             waypoints.Add(t.transform);
+        }
+
+        foreach (GameObject t in GameObject.FindGameObjectsWithTag("TrashBin"))
+        {
+            trashBins.Add(t.transform);
+        }
+
+        startingSpeed = agent.speed;
+        moodCheckTimer = moodSwing;
+    }
+
+    private void MoodChecks()
+    {
+        if (moodCheckTimer > 0)
+        {
+            moodCheckTimer -= Time.deltaTime;
+        }
+        else
+        {
+            currentMood = (Moods)Random.Range(0, System.Enum.GetValues(typeof(Moods)).Length);
+            moodCheckTimer = moodSwing;
+        }
+
+        switch (currentMood)
+        {
+            case Moods.Happy:
+                agent.speed = startingSpeed;
+                break;
+            case Moods.Bored:
+                agent.speed = startingSpeed / 2;
+                break;
+            case Moods.HateWatching:
+                Debug.Log("ANGRY");
+                break;
         }
     }
 
     private void Update()
     {
+        MoodChecks();
+
         if (!fullInventory)
         {
             WalkToNearComponent();
         }
         else
         {
-            WalkToFoodAllocator(GameObject.FindAnyObjectByType<FoodAllocator>());
+            if (currentMood == Moods.HateWatching)
+            {
+                WalkToTrashBin(GetNearestTrashBin());
+            }
+            else
+            {
+                if(foodAllocator.canEat == true)
+                {
+                    WalkToFoodAllocator(foodAllocator);
+                }
+                else
+                {
+                    agent.SetDestination(startingPos);
+                }
+
+            }
         }
     }
 
@@ -53,8 +119,31 @@ public class Worker : MonoBehaviour
         }
     }
 
+    private void WalkToTrashBin(Transform trashbin)
+    {
+        if (Vector3.Distance(transform.position, trashbin.position) <= pickupRadius)
+        {
+            fullInventory = false;
+            for (int i = 0; i < agentInventory.Length; i++)
+            {
+                if (agentInventory[i].gameObject.activeSelf == true)
+                {
+                    agentInventory[i].gameObject.SetActive(false);
+                }
+            }
+        }
+        agent.SetDestination(trashbin.transform.position);
+    }
+
     private void WalkToFoodAllocator(FoodAllocator foodAllocator)
     {
+        if (foodAllocator.canEat == false)
+        {
+            {
+                return;
+            }
+        }
+
         if (Vector3.Distance(transform.position, foodAllocator.transform.position) < foodAllocator.eatRange)
         {
             fullInventory = false;
@@ -64,6 +153,7 @@ public class Worker : MonoBehaviour
                 if (agentInventory[i].gameObject.activeSelf == true)
                 {
                     agentInventory[i].gameObject.SetActive(false);
+                    workerXP += 10;
                     foodAllocator.WorkerApproachEat();
                 }
             }
@@ -138,6 +228,28 @@ public class Worker : MonoBehaviour
         {
             Debug.Log("No object with Food component found within the search radius.");
         }
+    }
+
+
+    private Transform GetNearestTrashBin()
+    {
+        Transform[] allFoodComponents = trashBins.ToArray();
+
+        Transform nearestFoodComponent = null;
+        float nearestDistance = float.MaxValue;
+
+        foreach (Transform foodComponent in allFoodComponents)
+        {
+            float distance = Vector3.Distance(transform.position, foodComponent.transform.position);
+
+            if (distance < nearestDistance)
+            {
+                nearestFoodComponent = foodComponent;
+                nearestDistance = distance;
+            }
+        }
+
+        return nearestFoodComponent;
     }
 
     private Food GetNearestFoodComponent()
