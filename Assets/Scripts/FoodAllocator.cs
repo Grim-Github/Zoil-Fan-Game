@@ -5,11 +5,16 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 public class FoodAllocator : MonoBehaviour
 {
+    [Header("Hunger Main")]
     public bool canEat = true;
     public int foodEaten = 0;
-    public float hungerRate = 2;
-    public float hunger = 0;
-    private Transform playerPosition;
+    [Range(0, 5)] public float eatRange = 3f;
+
+    [Header("Hunger Multiplier")]
+    [Range(0, 10)] public float hungerRate = 2;
+    [Range(0, 100)] public float hunger = 0;
+
+    [Header("Hunger Components")]
     [SerializeField] private TextMeshProUGUI hungerText;
     [SerializeField] private TextMeshProUGUI eatenText;
     [SerializeField] private TextMeshProUGUI hungerRateText;
@@ -20,8 +25,9 @@ public class FoodAllocator : MonoBehaviour
     [SerializeField] private ParticleSystem foodEatParticles;
     private PlayerInventory inventory;
     private TwitchChatManager twitchChatManager;
+    private Transform playerPosition;
     private StreamerController streamerController;
-    public float eatRange = 3f;
+
 
     private void Awake()
     {
@@ -49,7 +55,7 @@ public class FoodAllocator : MonoBehaviour
         hungerText.text = Mathf.RoundToInt(hunger).ToString() + " /100";
         if (streamerController.isStreaming)
         {
-            hungerRateText.text = Math.Round(hungerRate/2, 2) + " HUNGER";
+            hungerRateText.text = Math.Round(hungerRate / 2, 2) + " HUNGER";
         }
         else
         {
@@ -113,7 +119,7 @@ public class FoodAllocator : MonoBehaviour
     {
         if (streamerController.isStreaming)
         {
-            hunger += Time.deltaTime * hungerRate/2;
+            hunger += Time.deltaTime * hungerRate / 2;
         }
         else
         {
@@ -126,7 +132,7 @@ public class FoodAllocator : MonoBehaviour
         {
             LoseGame();
         }
-
+        Debug.Log("TEst");
         UpdateHungerText();
         UpdateHungerSlider();
         PlayerApproachEat();

@@ -6,7 +6,7 @@ public class LookAtPlayer : MonoBehaviour
 
     private void Awake()
     {
-        playerTransform = GameObject.FindGameObjectWithTag("Player").transform;
+        playerTransform = GameObject.FindGameObjectWithTag("MainCamera").transform;
     }
 
 
